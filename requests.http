@@ -1,0 +1,41 @@
+### Adjust the port to match `dotnet run` output
+@host = http://localhost:5000
+
+### 1. Catalog (DataSet). Call twice: X-Cache goes MISS -> HIT
+GET {{host}}/api/products
+
+### 2. Catalog filtered by category
+GET {{host}}/api/products?category=Electronics
+
+### 3. Single product (cached)
+GET {{host}}/api/products/1
+
+### 4. Create a product (invalidates cached catalogs)
+POST {{host}}/api/products
+Content-Type: application/json
+
+{ "name": "Webcam", "category": "Electronics", "price": 59.90, "stock": 12 }
+
+### 5. Update a product
+PUT {{host}}/api/products/1
+Content-Type: application/json
+
+{ "name": "Mechanical Keyboard", "category": "Electronics", "price": 74.99, "stock": 25 }
+
+### 6. Place an order (transaction across Orders, OrderItems, Products)
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{ "customerName": "Asha", "items": [ { "productId": 1, "quantity": 2 }, { "productId": 5, "quantity": 10 } ] }
+
+### 7. Rollback demo: second line is impossible, so NOTHING is saved and stock is unchanged (409)
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{ "customerName": "Asha", "items": [ { "productId": 1, "quantity": 1 }, { "productId": 5, "quantity": 999999 } ] }
+
+### 8. Read an order back
+GET {{host}}/api/orders/1
+
+### 9. Delete (409 if the product appears in an order)
+DELETE {{host}}/api/products/6
